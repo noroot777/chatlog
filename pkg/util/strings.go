@@ -69,3 +69,25 @@ func Str2List(str string, sep string) []string {
 
 	return list
 }
+
+const base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+func IntToBase62(n int64) string {
+	if n == 0 {
+		return "0"
+	}
+	result := make([]byte, 0)
+	negative := n < 0
+	if negative {
+		n = -n
+	}
+	for n > 0 {
+		remainder := n % 62
+		result = append([]byte{base62Chars[remainder]}, result...)
+		n = n / 62
+	}
+	if negative {
+		result = append([]byte{'-'}, result...)
+	}
+	return string(result)
+}

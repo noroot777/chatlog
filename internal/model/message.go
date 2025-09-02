@@ -108,6 +108,7 @@ const (
 type Message struct {
 	Version    string                 `json:"-"`                  // 消息版本，内部判断
 	Seq        int64                  `json:"seq"`                // 消息序号，10位时间戳 + 3位序号
+	ServerID   string                 `json:"serverId,omitempty"` // 服务端消息 ID in base62
 	Time       time.Time              `json:"time"`               // 消息创建时间，10位时间戳
 	Talker     string                 `json:"talker"`             // 聊天对象，微信 ID or 群 ID
 	TalkerName string                 `json:"talkerName"`         // 聊天对象名称

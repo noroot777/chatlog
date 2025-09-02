@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -59,6 +61,9 @@ func (s *Service) initAPIRouter() {
 		api.GET("/contact", s.handleContacts)
 		api.GET("/chatroom", s.handleChatRooms)
 		api.GET("/session", s.handleSessions)
+
+		api.GET("/my/chatlog", s.handleMyChatlog)
+
 	}
 }
 
@@ -87,28 +92,51 @@ func (s *Service) NoRoute(c *gin.Context) {
 	}
 }
 
+type chatlogQuery struct {
+	Time    string `form:"time"`
+	Talker  string `form:"talker"`
+	Sender  string `form:"sender"`
+	Keyword string `form:"keyword"`
+	Limit   int    `form:"limit"`
+	Offset  int    `form:"offset"`
+	Format  string `form:"format"`
+}
+
+func (s *Service) handleMyChatlog(c *gin.Context) {
+	q := chatlogQuery{}
+
+	if err := c.BindQuery(&q); err != nil {
+		errors.Err(c, err)
+		return
+	}
+	st, err := strconv.ParseInt(q.Time, 10, 64)
+	if err != nil {
+		errors.Err(c, errors.InvalidArg("time"))
+		return
+	}
+	start := time.Unix(st, 0)
+
+	s.chatlogHandler(q, start, time.Now(), c)
+}
+
 func (s *Service) handleChatlog(c *gin.Context) {
 
-	q := struct {
-		Time    string `form:"time"`
-		Talker  string `form:"talker"`
-		Sender  string `form:"sender"`
-		Keyword string `form:"keyword"`
-		Limit   int    `form:"limit"`
-		Offset  int    `form:"offset"`
-		Format  string `form:"format"`
-	}{}
+	q := chatlogQuery{}
 
 	if err := c.BindQuery(&q); err != nil {
 		errors.Err(c, err)
 		return
 	}
 
-	var err error
 	start, end, ok := util.TimeRangeOf(q.Time)
 	if !ok {
 		errors.Err(c, errors.InvalidArg("time"))
 	}
+	s.chatlogHandler(q, start, end, c)
+}
+
+func (s *Service) chatlogHandler(q chatlogQuery, start, end time.Time, c *gin.Context) {
+	var err error
 	if q.Limit < 0 {
 		q.Limit = 0
 	}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sjzar/chatlog/internal/model/wxproto"
+	"github.com/sjzar/chatlog/pkg/util"
 	"github.com/sjzar/chatlog/pkg/util/zstd"
 	"google.golang.org/protobuf/proto"
 )
@@ -48,6 +49,7 @@ func (m *MessageV4) Wrap(talker string) *Message {
 
 	_m := &Message{
 		Seq:        m.SortSeq,
+		ServerID:   util.IntToBase62(m.ServerID),
 		Time:       time.Unix(m.CreateTime, 0),
 		Talker:     talker,
 		IsChatRoom: strings.HasSuffix(talker, "@chatroom"),
