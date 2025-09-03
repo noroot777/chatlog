@@ -62,8 +62,8 @@ func (s *Service) initAPIRouter() {
 		api.GET("/chatroom", s.handleChatRooms)
 		api.GET("/session", s.handleSessions)
 
-		api.GET("/my/chatlog", s.handleMyChatlog)
-
+		api.GET("/lt/chatlog", s.handleLtChatlog)
+		api.GET("/lt/groupchat", s.handleGroupchat)
 	}
 }
 
@@ -102,7 +102,7 @@ type chatlogQuery struct {
 	Format  string `form:"format"`
 }
 
-func (s *Service) handleMyChatlog(c *gin.Context) {
+func (s *Service) handleLtChatlog(c *gin.Context) {
 	q := chatlogQuery{}
 
 	if err := c.BindQuery(&q); err != nil {
@@ -448,4 +448,14 @@ func (s *Service) HandleVoice(c *gin.Context, data []byte) {
 		return
 	}
 	c.Data(http.StatusOK, "audio/mp3", out)
+}
+
+// for lt 群聊
+func (s *Service) handleGroupchat(c *gin.Context) {
+	// 读取lt配置，获取需要读取的群聊列表
+	chatRooms, err := s.wechat.LoadLtGroupChats()
+	if err != nil {
+		errors.Err(c, err)
+		return
+	}
 }
