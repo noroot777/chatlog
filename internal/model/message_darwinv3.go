@@ -51,7 +51,7 @@ func (m *MessageDarwinV3) Wrap(talker string) *Message {
 		_m.Sender = talker
 	}
 
-	_m.ParseMediaInfo(content)
+	_m.ParseMediaInfo(content, "darwinv3_not_spported_serverid")
 
 	return _m
 }

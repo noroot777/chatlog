@@ -126,7 +126,7 @@ type Message struct {
 	SysMsg   *SysMsg   `json:"sysMsg,omitempty"`   // 原始系统消息，XML 格式
 }
 
-func (m *Message) ParseMediaInfo(data string) error {
+func (m *Message) ParseMediaInfo(data string, serverId string) error {
 
 	m.Type, m.SubType = util.SplitInt64ToTwoInt32(m.Type)
 
@@ -167,6 +167,7 @@ func (m *Message) ParseMediaInfo(data string) error {
 	switch m.Type {
 	case MessageTypeImage:
 		m.Contents["md5"] = msg.Image.MD5
+		m.Content = "图片标识" + serverId
 	case MessageTypeVideo:
 		if msg.Video.Md5 != "" {
 			m.Contents["md5"] = msg.Video.Md5
@@ -174,6 +175,7 @@ func (m *Message) ParseMediaInfo(data string) error {
 		if msg.Video.RawMd5 != "" {
 			m.Contents["rawmd5"] = msg.Video.RawMd5
 		}
+		m.Content = "视频标识" + serverId
 	case MessageTypeAnimation:
 		m.Contents["cdnurl"] = msg.Emoji.CdnURL
 	case MessageTypeLocation:
@@ -234,7 +236,7 @@ func (m *Message) ParseMediaInfo(data string) error {
 			if subMsg.Sender == "" {
 				subMsg.Sender = msg.App.ReferMsg.FromUsr
 			}
-			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content); err != nil {
+			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content, serverId); err != nil {
 				break
 			}
 			m.Contents["refer"] = subMsg
