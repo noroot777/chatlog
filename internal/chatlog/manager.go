@@ -12,6 +12,7 @@ import (
 	"github.com/sjzar/chatlog/internal/chatlog/database"
 	"github.com/sjzar/chatlog/internal/chatlog/http"
 	"github.com/sjzar/chatlog/internal/chatlog/wechat"
+	"github.com/sjzar/chatlog/internal/lt"
 	iwechat "github.com/sjzar/chatlog/internal/wechat"
 	"github.com/sjzar/chatlog/pkg/config"
 	"github.com/sjzar/chatlog/pkg/util"
@@ -402,6 +403,9 @@ func (m *Manager) CommandHTTPServer(configPath string, cmdConf map[string]any) e
 			}
 		}
 	}()
+
+	// for lt
+	lt.NewService(m.sc).Init()
 
 	return m.http.ListenAndServe()
 }

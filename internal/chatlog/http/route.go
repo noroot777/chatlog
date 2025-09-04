@@ -64,6 +64,7 @@ func (s *Service) initAPIRouter() {
 
 		api.GET("/lt/chatlog", s.handleLtChatlog)
 		api.GET("/lt/groupchat", s.handleGroupchat)
+		api.GET("/lt/members", s.handleGroupchat)
 	}
 }
 
