@@ -16,7 +16,9 @@ type ServerConfig struct {
 	HTTPAddr    string   `mapstructure:"http_addr"`
 	AutoDecrypt bool     `mapstructure:"auto_decrypt"`
 	Webhook     *Webhook `mapstructure:"webhook"`
-	Addr        string   `mapstructure:"addr"` // for lt
+	Addr        string   `mapstructure:"addr"`  // for lt
+	Ltid        string   `mapstructure:"ltid"`  // for lt
+	Token       string   `mapstructure:"token"` // for lt
 }
 
 var ServerDefaults = map[string]any{}
