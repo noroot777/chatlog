@@ -10,6 +10,7 @@ import (
 
 type Service struct {
 	// sc *conf.ServerConfig
+	// chatlogdb *database.Service
 	db *sql.DB
 }
 
@@ -53,7 +54,7 @@ func (s *Service) Exec(query string, args ...any) (sql.Result, error) {
 	return s.db.Exec(query, args...)
 }
 
-func (s *Service) GetLtInfo(ltid string) model.LtConfig {
+func (s *Service) GetLtConfig(ltid string) model.LtConfig {
 	var tzConf model.LtConfig
 	var tzItem model.ConfigItem
 

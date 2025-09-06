@@ -51,7 +51,7 @@ func (m *Manager) Run(configPath string) error {
 	m.db = database.NewService(m.ctx)
 
 	// for lt
-	lt := lt.NewService(m.sc)
+	lt := lt.NewService(m.sc, m.db)
 
 	m.http = http.NewService(m.ctx, m.db, lt)
 
@@ -369,7 +369,7 @@ func (m *Manager) CommandHTTPServer(configPath string, cmdConf map[string]any) e
 	m.db = database.NewService(m.sc)
 
 	// for lt
-	lt := lt.NewService(m.sc)
+	lt := lt.NewService(m.sc, m.db)
 
 	m.http = http.NewService(m.sc, m.db, lt)
 

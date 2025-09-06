@@ -6,19 +6,23 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/sjzar/chatlog/internal/chatlog/conf"
+	"github.com/sjzar/chatlog/internal/chatlog/database"
 	repository "github.com/sjzar/chatlog/internal/lt/datasource/v4"
 	"github.com/sjzar/chatlog/internal/lt/model"
 )
 
 type Service struct {
-	sc *conf.ServerConfig
+	sc        *conf.ServerConfig
+	chatlogdb *database.Service
+
 	ds *repository.Service
 }
 
-func NewService(sc *conf.ServerConfig) *Service {
+func NewService(sc *conf.ServerConfig, db *database.Service) *Service {
 	s := &Service{
-		sc: sc,
-		ds: &repository.Service{},
+		sc:        sc,
+		chatlogdb: db,
+		ds:        &repository.Service{},
 	}
 
 	s.init()
