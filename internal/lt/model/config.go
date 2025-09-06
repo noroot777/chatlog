@@ -1,7 +1,7 @@
 package model
 
 type LtConfig struct {
-	Tzs []ConfigItem `json:"tzs"`
+	Tzs []*ConfigItem `json:"tzs"`
 }
 
 type ConfigItem struct {
@@ -13,6 +13,6 @@ type ConfigItem struct {
 }
 
 type ConfigGroupIn struct {
-	Name   string `json:"name"`
-	Cursor int64  `json:"cursor"`
+	Chatroom string `json:"chatroom"`
+	Cursor   int64  `json:"cursor"`
 }

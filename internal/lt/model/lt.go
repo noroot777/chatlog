@@ -10,6 +10,6 @@ type Tzs struct {
 type Groups struct {
 	Ltid     string `mapstructure:"ltid"`
 	Tz       string `mapstructure:"tz"`
-	Chatroom string `mapstructure:"name"` //TODO chatroom
+	Chatroom string `mapstructure:"chatroom"`
 	Cursor   int64  `mapstructure:"cursor"`
 }

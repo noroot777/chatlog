@@ -50,7 +50,10 @@ func (m *Manager) Run(configPath string) error {
 
 	m.db = database.NewService(m.ctx)
 
-	m.http = http.NewService(m.ctx, m.db)
+	// for lt
+	lt := lt.NewService(m.sc)
+
+	m.http = http.NewService(m.ctx, m.db, lt)
 
 	m.ctx.WeChatInstances = m.wechat.GetWeChatInstances()
 	if len(m.ctx.WeChatInstances) >= 1 {
@@ -365,7 +368,10 @@ func (m *Manager) CommandHTTPServer(configPath string, cmdConf map[string]any) e
 
 	m.db = database.NewService(m.sc)
 
-	m.http = http.NewService(m.sc, m.db)
+	// for lt
+	lt := lt.NewService(m.sc)
+
+	m.http = http.NewService(m.sc, m.db, lt)
 
 	if m.sc.GetAutoDecrypt() {
 		if err := m.wechat.StartAutoDecrypt(); err != nil {
@@ -403,9 +409,6 @@ func (m *Manager) CommandHTTPServer(configPath string, cmdConf map[string]any) e
 			}
 		}
 	}()
-
-	// for lt
-	lt.NewService(m.sc).Init()
 
 	return m.http.ListenAndServe()
 }

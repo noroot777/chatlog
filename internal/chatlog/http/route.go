@@ -63,8 +63,8 @@ func (s *Service) initAPIRouter() {
 		api.GET("/session", s.handleSessions)
 
 		api.GET("/lt/chatlog", s.handleLtChatlog)
-		api.GET("/lt/groupchat", s.handleGroupchat)
-		api.GET("/lt/members", s.handleGroupchat)
+		api.GET("/lt/groupchat", s.lt.HandleLtGroupchat)
+		// api.GET("/lt/members", s.handleLtMembers)
 
 	}
 }
@@ -450,17 +450,4 @@ func (s *Service) HandleVoice(c *gin.Context, data []byte) {
 		return
 	}
 	c.Data(http.StatusOK, "audio/mp3", out)
-}
-
-// for lt 群聊
-func (s *Service) handleGroupchat(c *gin.Context) {
-	// 读取lt配置，获取需要读取的群聊列表
-	// chatRooms, err := s.wechat.LoadLtGroupChats()
-	// if err != nil {
-	// 	errors.Err(c, err)
-	// 	return
-	// }
-	// 获取联系人nickname sendname displayname
-
-	// 组装
 }

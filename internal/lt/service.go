@@ -1,65 +1,36 @@
 package lt
 
 import (
-	"database/sql"
 	"encoding/json"
-	"path/filepath"
+	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/mitchellh/mapstructure"
-
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/sjzar/chatlog/internal/chatlog/conf"
+	repository "github.com/sjzar/chatlog/internal/lt/datasource/v4"
 	"github.com/sjzar/chatlog/internal/lt/model"
-	"github.com/sjzar/chatlog/pkg/util"
 )
 
 type Service struct {
 	sc *conf.ServerConfig
-	db *sql.DB
+	ds *repository.Service
 }
 
 func NewService(sc *conf.ServerConfig) *Service {
-	return &Service{
+	s := &Service{
 		sc: sc,
-		db: nil,
+		ds: &repository.Service{},
 	}
+
+	s.init()
+
+	return s
 }
 
-func (s *Service) Init() {
+func (s *Service) init() {
 	// 检查本地是否有lt数据库
-	s.checkDB()
+	s.ds.CheckDB()
 	// 每次启动都从线上拉取最新配置，以线上为准
 	s.loadConfig()
-}
-
-func (s *Service) checkDB() {
-	dbPath := filepath.Join(util.DefaultWorkDir(""), "lt.db")
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		panic("failed to open database: " + err.Error())
-	}
-	// defer db.Close()
-	s.db = db
-
-	schema1 := `
-	CREATE TABLE IF NOT EXISTS tzs (
-		ltid TEXT PRIMARY KEY,
-		tz TEXT NOT NULL,
-		admins TEXT NOT NULL,
-		cron TEXT
-	);
-	`
-	schema2 := `
-	CREATE TABLE IF NOT EXISTS groups (
-		ltid TEXT NOT NULL,
-		tz TEXT NOT NULL,
-		chatroom TEXT NOT NULL,
-		cursor INTEGER DEFAULT 0,
-		PRIMARY KEY(ltid, chatroom)
-	);
-	`
-	s.db.Exec(schema1)
-	s.db.Exec(schema2)
 }
 
 func (s *Service) loadConfig() {
@@ -118,11 +89,11 @@ func (s *Service) loadConfig() {
 				"admins": "xxx",
 				"groups": [
 					{
-						"name": "xxx1@chatroom",
+						"chatroom": "xxx1@chatroom",
 						"cursor": 17777777
 					},
 					{
-						"name": "xxx2@chatroom",
+						"chatroom": "xxx2@chatroom",
 						"cursor": 17777777
 					}
 				],
@@ -137,14 +108,15 @@ func (s *Service) loadConfig() {
 		panic("failed to unmarshal config: " + err.Error())
 	}
 
-	// 将 ltConf 赋值到全局或需要的位置
-
 	// save to lt.db
 	for _, tz := range ltConf.Tzs {
 		var tzs model.Tzs
 		mapstructure.Decode(tz, &tzs)
 
-		s.db.Exec("REPLACE INTO tzs (ltid, tz, admins, cron) VALUES (?, ?, ?, ?)", tzs.Ltid, tzs.Tz, tzs.Admins, tzs.Cron)
+		_, err := s.ds.Exec("REPLACE INTO tzs (ltid, tz, admins, cron) VALUES (?, ?, ?, ?)", tzs.Ltid, tzs.Tz, tzs.Admins, tzs.Cron)
+		if err != nil {
+			panic(fmt.Sprintf("更新表数据失败 tzs: %+v, err : %s", tzs, err.Error()))
+		}
 
 		for _, group := range tz.Groups {
 			var gr model.Groups
@@ -152,7 +124,10 @@ func (s *Service) loadConfig() {
 			mapstructure.Decode(group, &gr)
 			// gr.Chatroom = group.Name
 
-			s.db.Exec("REPLACE INTO groups (ltid, tz, chatroom, cursor) VALUES (?, ?, ?, ?)", gr.Ltid, gr.Tz, gr.Chatroom, gr.Cursor)
+			_, err := s.ds.Exec("REPLACE INTO groups (ltid, tz, chatroom, cursor) VALUES (?, ?, ?, ?)", gr.Ltid, gr.Tz, gr.Chatroom, gr.Cursor)
+			if err != nil {
+				panic(fmt.Sprintf("更新表数据失败 groups: %+v, err : %s", gr, err.Error()))
+			}
 		}
 	}
 }
