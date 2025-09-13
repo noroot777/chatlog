@@ -16,6 +16,7 @@ type ChatRoom struct {
 	NickName string `json:"nickName"`
 
 	User2DisplayName map[string]string `json:"-"`
+	DisplayName2User map[string]string `json:"-"`
 }
 
 type ChatRoomUser struct {
@@ -70,9 +71,11 @@ func (c *ChatRoomV3) Wrap() *ChatRoom {
 	}
 
 	user2DisplayName := make(map[string]string, len(users))
+	DisplayName2User := make(map[string]string, len(users))
 	for _, user := range users {
 		if user.DisplayName != "" {
 			user2DisplayName[user.UserName] = user.DisplayName
+			DisplayName2User[user.DisplayName] = user.UserName
 		}
 	}
 
@@ -81,6 +84,7 @@ func (c *ChatRoomV3) Wrap() *ChatRoom {
 		Owner:            c.Reserved2,
 		Users:            users,
 		User2DisplayName: user2DisplayName,
+		DisplayName2User: DisplayName2User,
 	}
 }
 

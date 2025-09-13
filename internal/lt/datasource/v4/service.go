@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"path/filepath"
+	"strings"
 
 	"github.com/sjzar/chatlog/internal/lt/model"
 	"github.com/sjzar/chatlog/pkg/util"
@@ -69,7 +70,7 @@ func (s *Service) GetLtConfig(ltid string) model.LtConfig {
 
 	rows, err := s.db.Query("SELECT chatroom, cursor FROM groups WHERE ltid=?", ltid)
 	if err != nil {
-		panic("查询groups失败: " + err.Error())
+		panic("查询groups失败 in GetLtConfig: " + err.Error())
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -79,9 +80,28 @@ func (s *Service) GetLtConfig(ltid string) model.LtConfig {
 			&gr.Cursor,
 		)
 		if err != nil {
-			panic("扫描groups失败: " + err.Error())
+			panic("扫描groups失败 in GetLtConfig: " + err.Error())
 		}
 		tzItem.Groups = append(tzItem.Groups, &gr)
 	}
 	return tzConf
+}
+
+func (s *Service) GetLtAdmins() []string {
+	var admins []string
+	rows, err := s.db.Query("SELECT admins FROM tzs")
+	if err != nil {
+		panic("查询admins失败 in GetPM: " + err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var admins_inrow string
+		err := rows.Scan(&admins_inrow)
+		if err != nil {
+			panic("扫描admins失败 in GetPM: " + err.Error())
+		}
+		admins = append(admins, strings.Split(admins_inrow, ",")...)
+	}
+
+	return admins
 }

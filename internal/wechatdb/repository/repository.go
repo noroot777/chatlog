@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/sjzar/chatlog/internal/errors"
+	ltmodel "github.com/sjzar/chatlog/internal/lt/model"
 	"github.com/sjzar/chatlog/internal/model"
 	"github.com/sjzar/chatlog/internal/wechatdb/datasource"
 )
@@ -36,6 +37,9 @@ type Repository struct {
 
 	// 快速查找索引
 	chatRoomUserToInfo map[string]*model.Contact
+
+	// Cache for lt
+	tzs *ltmodel.Tzs
 }
 
 // New 创建一个新的 Repository
@@ -57,6 +61,7 @@ func New(ds datasource.DataSource) (*Repository, error) {
 		chatRoomList:       make([]string, 0),
 		chatRoomRemark:     make([]string, 0),
 		chatRoomNickName:   make([]string, 0),
+		tzs:                &ltmodel.Tzs{},
 	}
 
 	// 初始化缓存
@@ -82,6 +87,10 @@ func (r *Repository) initCache(ctx context.Context) error {
 		return err
 	}
 
+	// init lt watch list
+	if err := r.initLtWatchList(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -92,6 +101,7 @@ func (r *Repository) contactCallback(event fsnotify.Event) error {
 	if err := r.initContactCache(context.Background()); err != nil {
 		log.Err(err).Msgf("Failed to reinitialize contact cache: %s", event.Name)
 	}
+	log.Info().Msgf("Reinitialized CONTANCT cache 完成: %s", event.Name)
 	return nil
 }
 
@@ -102,6 +112,7 @@ func (r *Repository) chatroomCallback(event fsnotify.Event) error {
 	if err := r.initChatRoomCache(context.Background()); err != nil {
 		log.Err(err).Msgf("Failed to reinitialize contact cache: %s", event.Name)
 	}
+	log.Info().Msgf("Reinitialized CHAT ROOM cache 完成: %s", event.Name)
 	return nil
 }
 

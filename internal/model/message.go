@@ -108,7 +108,7 @@ const (
 type Message struct {
 	Version    string                 `json:"-"`                  // 消息版本，内部判断
 	Seq        int64                  `json:"seq"`                // 消息序号，10位时间戳 + 3位序号
-	ServerID   string                 `json:"serverId,omitempty"` // 服务端消息 ID in base62
+	ServerID   string                 `json:"serverId"`           // 服务端消息 ID in base62
 	Time       time.Time              `json:"time"`               // 消息创建时间，10位时间戳
 	Talker     string                 `json:"talker"`             // 聊天对象，微信 ID or 群 ID
 	TalkerName string                 `json:"talkerName"`         // 聊天对象名称
@@ -124,9 +124,12 @@ type Message struct {
 	// Debug Info
 	MediaMsg *MediaMsg `json:"mediaMsg,omitempty"` // 原始多媒体消息，XML 格式
 	SysMsg   *SysMsg   `json:"sysMsg,omitempty"`   // 原始系统消息，XML 格式
+
+	// for lt
+	Remark string `json:"remark,omitempty"` // 备注名
 }
 
-func (m *Message) ParseMediaInfo(data string, serverId string) error {
+func (m *Message) ParseMediaInfo(data string) error {
 
 	m.Type, m.SubType = util.SplitInt64ToTwoInt32(m.Type)
 
@@ -167,7 +170,6 @@ func (m *Message) ParseMediaInfo(data string, serverId string) error {
 	switch m.Type {
 	case MessageTypeImage:
 		m.Contents["md5"] = msg.Image.MD5
-		m.Content = "图片标识" + serverId
 	case MessageTypeVideo:
 		if msg.Video.Md5 != "" {
 			m.Contents["md5"] = msg.Video.Md5
@@ -175,7 +177,6 @@ func (m *Message) ParseMediaInfo(data string, serverId string) error {
 		if msg.Video.RawMd5 != "" {
 			m.Contents["rawmd5"] = msg.Video.RawMd5
 		}
-		m.Content = "视频标识" + serverId
 	case MessageTypeAnimation:
 		m.Contents["cdnurl"] = msg.Emoji.CdnURL
 	case MessageTypeLocation:
@@ -232,11 +233,12 @@ func (m *Message) ParseMediaInfo(data string, serverId string) error {
 				Time:       time.Unix(msg.App.ReferMsg.CreateTime, 0),
 				Sender:     msg.App.ReferMsg.ChatUsr,
 				SenderName: msg.App.ReferMsg.DisplayName,
+				ServerID:   msg.App.ReferMsg.SvrID,
 			}
 			if subMsg.Sender == "" {
 				subMsg.Sender = msg.App.ReferMsg.FromUsr
 			}
-			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content, serverId); err != nil {
+			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content); err != nil {
 				break
 			}
 			m.Contents["refer"] = subMsg
@@ -286,6 +288,7 @@ func (m *Message) ParseMediaInfo(data string, serverId string) error {
 				payMemo = "(" + msg.App.WCPayInfo.PayMemo + ")"
 			}
 			m.Content = fmt.Sprintf("[转账|%s%s]%s", _type, msg.App.WCPayInfo.FeeDesc, payMemo)
+			m.MediaMsg = &msg
 		}
 	}
 
@@ -543,5 +546,155 @@ func (m *Message) CSV(host string) []string {
 		m.TalkerName,
 		m.Talker,
 		m.PlainTextContent(),
+	}
+}
+
+/** === for lt === */
+
+func (m *Message) PlainText4Lt(showChatRoom bool, timeFormat string, host string) string {
+
+	if timeFormat == "" {
+		timeFormat = "2006-01-02 15:04:05"
+	}
+
+	m.SetContent("host", host)
+
+	buf := strings.Builder{}
+
+	sender := m.Sender
+	// if m.IsSelf {
+	// 	sender = "我"
+	// }
+	buf.WriteString(m.Time.Format(timeFormat))
+	buf.WriteString(" ")
+	if m.SenderName != "" {
+		buf.WriteString(m.SenderName)
+	} else {
+		buf.WriteString(sender)
+	}
+	buf.WriteString(" ")
+
+	if m.IsChatRoom && showChatRoom {
+		buf.WriteString("[")
+		if m.TalkerName != "" {
+			buf.WriteString(m.TalkerName)
+			buf.WriteString("(")
+			buf.WriteString(m.Talker)
+			buf.WriteString(")")
+		} else {
+			buf.WriteString(m.Talker)
+		}
+		buf.WriteString("] ")
+	}
+
+	buf.WriteString("\n")
+
+	buf.WriteString(m.PlainTextContent4Lt())
+
+	return buf.String()
+}
+
+func (m *Message) PlainTextContent4Lt() string {
+	switch m.Type {
+	case MessageTypeText:
+		return m.Content
+	case MessageTypeImage:
+		return "图片标识" + m.ServerID
+	case MessageTypeVoice:
+		return "[语音]"
+	case MessageTypeCard:
+		return "[名片]"
+	case MessageTypeVideo:
+		return "视频标识" + m.ServerID
+	case MessageTypeAnimation:
+		return "[动画表情]"
+	case MessageTypeLocation:
+		return "[位置]"
+	case MessageTypeShare:
+		switch m.SubType {
+		case MessageSubTypeText:
+			return "[链接]"
+		case MessageSubTypeLink, MessageSubTypeLink2:
+			return "[链接]"
+		case MessageSubTypeFile:
+			return "[文件]"
+		case MessageSubTypeGIF:
+			return "[GIF表情]"
+		case MessageSubTypeMergeForward:
+			return "[合并转发]"
+		case MessageSubTypeNote:
+			return "[笔记]"
+		case MessageSubTypeMiniProgram, MessageSubTypeMiniProgram2:
+			return "[小程序]"
+		case MessageSubTypeChannel:
+			return "[视频号]"
+		case MessageSubTypeQuote:
+			_refer, ok := m.Contents["refer"]
+			if !ok {
+				if m.Content == "" {
+					return "[引用]"
+				}
+				return "\n[引用]\n" + m.Content
+			}
+			refer, ok := _refer.(*Message)
+			if !ok {
+				if m.Content == "" {
+					return "[引用]"
+				}
+				return "\n[引用]\n" + m.Content
+			}
+			buf := strings.Builder{}
+			buf.WriteString(m.Content)
+			buf.WriteString("\n[引用]")
+			host := ""
+			if m.Contents["host"] != nil {
+				host = m.Contents["host"].(string)
+			}
+			referContent := refer.PlainText4Lt(false, "", host)
+			buf.WriteString(referContent)
+			return buf.String()
+		case MessageSubTypePat:
+			return m.Content
+		case MessageSubTypeChannelLive:
+			return "[视频号直播]"
+		case MessageSubTypeChatRoomNotice:
+			// TODO: 群公告的解析
+			_recordInfo, ok := m.Contents["recordInfo"]
+			if !ok {
+				return "[群公告]"
+			}
+			recordInfo, ok := _recordInfo.(*RecordInfo)
+			if !ok {
+				return "[群公告]"
+			}
+			host := ""
+			if m.Contents["host"] != nil {
+				host = m.Contents["host"].(string)
+			}
+			return recordInfo.String("群公告", "", host)
+		case MessageSubTypeMusic:
+			// return fmt.Sprintf("[音乐|%s](%s)", m.Contents["title"], m.Contents["url"])
+			return "[音乐]"
+		case MessageSubTypePay:
+			return m.Content
+		case MessageSubTypeRedEnvelope:
+			return "[红包]"
+		case MessageSubTypeRedEnvelopeCover:
+			return "[红包封面]"
+		default:
+			return "[分享]"
+		}
+	case MessageTypeVOIP:
+		return "[语音通话]"
+	case MessageTypeSystem:
+		// TODO: 处理群成员
+		// return m.Content
+		return "[系统消息]"
+	default:
+		content := m.Content
+		if len(content) > 120 {
+			content = content[:120] + "<...>"
+		}
+		return fmt.Sprintf("Type: %d Content: %s", m.Type, content)
 	}
 }

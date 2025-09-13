@@ -8,6 +8,7 @@ import (
 
 	"github.com/sjzar/chatlog/internal/chatlog/conf"
 	"github.com/sjzar/chatlog/internal/chatlog/webhook"
+	"github.com/sjzar/chatlog/internal/lt"
 	"github.com/sjzar/chatlog/internal/model"
 	"github.com/sjzar/chatlog/internal/wechatdb"
 )
@@ -50,6 +51,10 @@ func (s *Service) Start() error {
 	s.SetReady()
 	s.db = db
 	s.initWebhook()
+
+	// for lt
+	lt.NewService(nil, s.db)
+
 	return nil
 }
 

@@ -12,7 +12,6 @@ import (
 	"github.com/sjzar/chatlog/internal/chatlog/database"
 	"github.com/sjzar/chatlog/internal/chatlog/http"
 	"github.com/sjzar/chatlog/internal/chatlog/wechat"
-	"github.com/sjzar/chatlog/internal/lt"
 	iwechat "github.com/sjzar/chatlog/internal/wechat"
 	"github.com/sjzar/chatlog/pkg/config"
 	"github.com/sjzar/chatlog/pkg/util"
@@ -50,10 +49,11 @@ func (m *Manager) Run(configPath string) error {
 
 	m.db = database.NewService(m.ctx)
 
-	// for lt
-	lt := lt.NewService(m.sc, m.db)
+	// // for lt
+	// lt := lt.NewService(m.sc, m.db)
 
-	m.http = http.NewService(m.ctx, m.db, lt)
+	// m.http = http.NewService(m.ctx, m.db, lt)
+	m.http = http.NewService(m.ctx, m.db)
 
 	m.ctx.WeChatInstances = m.wechat.GetWeChatInstances()
 	if len(m.ctx.WeChatInstances) >= 1 {
@@ -368,10 +368,11 @@ func (m *Manager) CommandHTTPServer(configPath string, cmdConf map[string]any) e
 
 	m.db = database.NewService(m.sc)
 
-	// for lt
-	lt := lt.NewService(m.sc, m.db)
+	// // for lt
+	// lt := lt.NewService(m.sc, m.db)
 
-	m.http = http.NewService(m.sc, m.db, lt)
+	// m.http = http.NewService(m.sc, m.db, lt)
+	m.http = http.NewService(m.sc, m.db)
 
 	if m.sc.GetAutoDecrypt() {
 		if err := m.wechat.StartAutoDecrypt(); err != nil {

@@ -51,6 +51,21 @@ func (s *Service) HandleLtGroupchat(c *gin.Context) {
 	// 组装
 }
 
+func (s *Service) HandlePM(c *gin.Context) {
+	admins := s.ds.GetLtAdmins()
+
+	for _, admin := range admins {
+		_ = admin
+
+		// msg, err := s.chatlogdb.GetMessages(time.Unix(g.Cursor, 0), time.Now(), admin, "", "", 300, 0)
+		// if err != nil {
+		// 	errors.Err(c, err)
+		// 	return
+		// }
+		// msgs = append(msgs, msg...)
+	}
+}
+
 // 配置
 func (s *Service) HandleLtConfig(c *gin.Context) {
 	q := struct {

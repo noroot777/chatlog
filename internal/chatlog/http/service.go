@@ -11,7 +11,6 @@ import (
 
 	"github.com/sjzar/chatlog/internal/chatlog/database"
 	"github.com/sjzar/chatlog/internal/errors"
-	"github.com/sjzar/chatlog/internal/lt"
 )
 
 type Service struct {
@@ -25,7 +24,7 @@ type Service struct {
 	mcpSSEServer        *server.SSEServer
 	mcpStreamableServer *server.StreamableHTTPServer
 
-	lt *lt.Service // for lt
+	// lt *lt.Service // for lt
 }
 
 type Config interface {
@@ -33,7 +32,7 @@ type Config interface {
 	GetDataDir() string
 }
 
-func NewService(conf Config, db *database.Service, lt *lt.Service) *Service {
+func NewService(conf Config, db *database.Service) *Service {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
@@ -54,7 +53,7 @@ func NewService(conf Config, db *database.Service, lt *lt.Service) *Service {
 		conf:   conf,
 		db:     db,
 		router: router,
-		lt:     lt,
+		// lt:     lt,
 	}
 
 	s.initMCPServer()

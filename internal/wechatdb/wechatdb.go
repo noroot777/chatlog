@@ -7,6 +7,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/mattn/go-sqlite3"
 
+	ltmodel "github.com/sjzar/chatlog/internal/lt/model"
 	"github.com/sjzar/chatlog/internal/model"
 	"github.com/sjzar/chatlog/internal/wechatdb/datasource"
 	"github.com/sjzar/chatlog/internal/wechatdb/repository"
@@ -56,6 +57,10 @@ func (w *DB) Initialize() error {
 	}
 
 	return nil
+}
+
+func (w *DB) GetTzs4Lt() *ltmodel.Tzs {
+	return w.repo.GetTzs4Lt()
 }
 
 func (w *DB) GetMessages(start, end time.Time, talker string, sender string, keyword string, limit, offset int) ([]*model.Message, error) {

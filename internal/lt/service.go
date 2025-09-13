@@ -1,24 +1,23 @@
 package lt
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
 
-	"github.com/go-viper/mapstructure/v2"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/sjzar/chatlog/internal/chatlog/conf"
-	"github.com/sjzar/chatlog/internal/chatlog/database"
 	repository "github.com/sjzar/chatlog/internal/lt/datasource/v4"
-	"github.com/sjzar/chatlog/internal/lt/model"
+	"github.com/sjzar/chatlog/internal/lt/task"
+	"github.com/sjzar/chatlog/internal/wechatdb"
 )
 
 type Service struct {
 	sc        *conf.ServerConfig
-	chatlogdb *database.Service
+	chatlogdb *wechatdb.DB
 
 	ds *repository.Service
 }
 
-func NewService(sc *conf.ServerConfig, db *database.Service) *Service {
+func NewService(sc *conf.ServerConfig, db *wechatdb.DB) *Service {
 	s := &Service{
 		sc:        sc,
 		chatlogdb: db,
@@ -35,6 +34,24 @@ func (s *Service) init() {
 	s.ds.CheckDB()
 	// 每次启动都从线上拉取最新配置，以线上为准
 	s.loadConfig()
+	// 启动获取任务的定时程序
+	s.initScheduler()
+}
+
+func (s *Service) initScheduler() {
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	scheduler, err := gocron.NewScheduler(gocron.WithLocation(loc), gocron.WithGlobalJobOptions())
+	if err != nil {
+		panic("failed to create scheduler: " + err.Error())
+	}
+	// 每10s去线上获取任务
+	scheduler.NewJob(
+		gocron.DurationJob(10*time.Second),
+		gocron.NewTask(task.FetchAndExecuteOnlineTask, s.chatlogdb),
+		gocron.WithName("fetchAndExecuteTask"),
+		gocron.WithTags("lt_online_task_every_10s"),
+	)
+	scheduler.Start()
 }
 
 func (s *Service) loadConfig() {
@@ -70,68 +87,70 @@ func (s *Service) loadConfig() {
 			1. 获取初始化信息 /api/chatlog/config?ltid=xxx	GET	{tzs:[{tz:"xxx", admins:"xxx,xxx", groups:[{name:"xxx@chatroom", cursor:12345678}, ...], cron:"xxx"}]}
 				如果是公用号，则返回所有tz信息[&conf.Lt]
 	*/
-	// addr := s.sc.Addr + "?ltid=" + s.sc.Ltid
-	// // 从addr地址获取返回值，组成conf.Lt
-	// http.Head(s.sc.Token)
-	// resp, err := http.Get(addr)
-	// if err != nil {
-	// 	panic("failed to fetch config: " + err.Error())
+
+	// body := []byte(`
+	// {
+	// 	"tzs": [
+	// 		{
+	// 			"tz": "xxx2",
+	// 			"ltid": "tzid_in_lt",
+	// 			"admins": "xxx",
+	// 			"groups": [
+	// 				{
+	// 					"chatroom": "xxx1@chatroom",
+	// 					"cursor": 17777777
+	// 				},
+	// 				{
+	// 					"chatroom": "xxx2@chatroom",
+	// 					"cursor": 17777777
+	// 				}
+	// 			],
+	// 			"cron": "abc2"
+	// 		}
+	// 	]
+	// }`)
+
+	// // 假设 conf.Lt 是一个结构体，需要根据实际结构定义
+	// var ltConf model.LtConfig
+	// if err := json.Unmarshal(body, &ltConf); err != nil {
+	// 	panic("failed to unmarshal config: " + err.Error())
 	// }
-	// defer resp.Body.Close()
 
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	panic("failed to read response body: " + err.Error())
+	// // save to lt.db
+	// for _, tz := range ltConf.Tzs {
+	// 	var tzs model.Tzs
+	// 	mapstructure.Decode(tz, &tzs)
+
+	// 	_, err := s.ds.Exec("REPLACE INTO tzs (ltid, tz, admins, cron) VALUES (?, ?, ?, ?)", tzs.Ltid, tzs.Tz, tzs.Admins, tzs.Cron)
+	// 	if err != nil {
+	// 		panic(fmt.Sprintf("更新表数据失败 tzs: %+v, err : %s", tzs, err.Error()))
+	// 	}
+
+	// 	for _, group := range tz.Groups {
+	// 		var gr model.Groups
+	// 		mapstructure.Decode(tz, &gr)
+	// 		mapstructure.Decode(group, &gr)
+	// 		// gr.Chatroom = group.Name
+
+	// 		_, err := s.ds.Exec("REPLACE INTO groups (ltid, tz, chatroom, cursor) VALUES (?, ?, ?, ?)", gr.Ltid, gr.Tz, gr.Chatroom, gr.Cursor)
+	// 		if err != nil {
+	// 			panic(fmt.Sprintf("更新表数据失败 groups: %+v, err : %s", gr, err.Error()))
+	// 		}
+	// 	}
 	// }
-
-	body := []byte(`
-	{
-		"tzs": [
-			{
-				"tz": "xxx2",
-				"ltid": "tzid_in_lt",
-				"admins": "xxx",
-				"groups": [
-					{
-						"chatroom": "xxx1@chatroom",
-						"cursor": 17777777
-					},
-					{
-						"chatroom": "xxx2@chatroom",
-						"cursor": 17777777
-					}
-				],
-				"cron": "abc2"
-			}
-		]
-	}`)
-
-	// 假设 conf.Lt 是一个结构体，需要根据实际结构定义
-	var ltConf model.LtConfig
-	if err := json.Unmarshal(body, &ltConf); err != nil {
-		panic("failed to unmarshal config: " + err.Error())
-	}
-
-	// save to lt.db
-	for _, tz := range ltConf.Tzs {
-		var tzs model.Tzs
-		mapstructure.Decode(tz, &tzs)
-
-		_, err := s.ds.Exec("REPLACE INTO tzs (ltid, tz, admins, cron) VALUES (?, ?, ?, ?)", tzs.Ltid, tzs.Tz, tzs.Admins, tzs.Cron)
-		if err != nil {
-			panic(fmt.Sprintf("更新表数据失败 tzs: %+v, err : %s", tzs, err.Error()))
-		}
-
-		for _, group := range tz.Groups {
-			var gr model.Groups
-			mapstructure.Decode(tz, &gr)
-			mapstructure.Decode(group, &gr)
-			// gr.Chatroom = group.Name
-
-			_, err := s.ds.Exec("REPLACE INTO groups (ltid, tz, chatroom, cursor) VALUES (?, ?, ?, ?)", gr.Ltid, gr.Tz, gr.Chatroom, gr.Cursor)
-			if err != nil {
-				panic(fmt.Sprintf("更新表数据失败 groups: %+v, err : %s", gr, err.Error()))
-			}
-		}
-	}
 }
+
+// 适用于上面的方法
+// type Tzs struct {
+// 	Ltid   string `mapstructure:"ltid"`
+// 	Tz     string `mapstructure:"tz"`
+// 	Admins string `mapstructure:"admins"`
+// 	Cron   string `mapstructure:"cron"`
+// }
+
+// type Groups struct {
+// 	Ltid     string `mapstructure:"ltid"`
+// 	Tz       string `mapstructure:"tz"`
+// 	Chatroom string `mapstructure:"chatroom"`
+// 	Cursor   int64  `mapstructure:"cursor"`
+// }
