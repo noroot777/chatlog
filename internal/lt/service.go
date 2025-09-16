@@ -47,11 +47,11 @@ func (s *Service) initScheduler() {
 	// 每10s去线上获取任务
 	scheduler.NewJob(
 		gocron.DurationJob(10*time.Second),
-		gocron.NewTask(task.FetchAndExecuteOnlineTask, s.chatlogdb),
+		gocron.NewTask(task.FetchAndExecuteOnlineTask, s.chatlogdb, s.chatlogdb.GetTzs4Lt()),
 		gocron.WithName("fetchAndExecuteTask"),
 		gocron.WithTags("lt_online_task_every_10s"),
 	)
-	scheduler.Start()
+	// scheduler.Start() // TODO start
 }
 
 func (s *Service) loadConfig() {

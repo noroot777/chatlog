@@ -13,13 +13,23 @@ func (r *Repository) GetTzs4Lt() *model.Tzs {
 
 func (r *Repository) initLtWatchList() error {
 	// TODO init lt watch list
+	// url := fmt.Sprintf("https://your-api-host/api/chatlog/init?wxid=%s", "") // TODO 根据wxid获取tzs信息
+	// resp, err := http.Get(url)
+	// if err != nil {
+	// 	fmt.Printf("failed to fetch online task: %v\n", err)
+	// 	return err
+	// }
+	// defer resp.Body.Close()
+	// body, err := io.ReadAll(resp.Body)
+
 	body := []byte(`
 		{
 			"tzs": [
 				{
 					"tz": "tuanzi_chatlog",
-					"wxid": "wxid_lw7htwzweu8e22,wxid_q7pbibmw8u8r22,guanjun915423",
-					"groups": ["24967990639@chatroom", "44561777260@chatroom", "19400951536@chatroom", "45109606216@chatroom", "55855301186@chatroom"]
+					"wxid": "wxid_lw7htwzweu8e22,wxid_q7pbibmw8u8r22,wxid_ypg32n67jcil12",
+					"groups": ["24967990639@chatroom", "44561777260@chatroom", "19400951536@chatroom", "45109606216@chatroom", "55855301186@chatroom"],
+					"token": "xxx"
 				}
 			],
 			"public": true
@@ -30,7 +40,6 @@ func (r *Repository) initLtWatchList() error {
 	if err := json.Unmarshal(body, &tzs); err != nil {
 		panic("failed to unmarshal config: " + err.Error())
 	}
-	r.tzs = tzs
 
 	tzs.TzMap = make(map[string]string)
 	for _, tz := range tzs.Tzs {
@@ -48,6 +57,7 @@ func (r *Repository) initLtWatchList() error {
 		// }
 	}
 
+	r.tzs = tzs
 	// r.watchList4Lt = append(r.watchList4Lt, "24967990639@chatroom", "44561777260@chatroom", "19400951536@chatroom",
 	// 	"45109606216@chatroom", "55855301186@chatroom", "wxid_ypg32n67jcil12", "wxid_lw7htwzweu8e22", "wxid_q7pbibmw8u8r22")
 	return nil

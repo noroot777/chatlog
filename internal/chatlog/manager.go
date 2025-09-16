@@ -51,8 +51,14 @@ func (m *Manager) Run(configPath string) error {
 
 	// // for lt
 	// lt := lt.NewService(m.sc, m.db)
-
 	// m.http = http.NewService(m.ctx, m.db, lt)
+
+	// TODO
+	// init lt watch list
+	// if err := r.initLtWatchList(r.m); err != nil {
+	// 	return err
+	// }
+
 	m.http = http.NewService(m.ctx, m.db)
 
 	m.ctx.WeChatInstances = m.wechat.GetWeChatInstances()

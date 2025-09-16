@@ -77,4 +77,5 @@ type Tz struct {
 	Tz     string   `json:"tz"`
 	Wxid   string   `json:"wxid"`
 	Groups []string `json:"groups"`
+	Token  string   `json:"token"`
 }

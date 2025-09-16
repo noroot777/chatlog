@@ -56,6 +56,9 @@ func (w *DB) Initialize() error {
 		return err
 	}
 
+	// TODO
+	// w.repo.initlt(w.ctx)
+
 	return nil
 }
 

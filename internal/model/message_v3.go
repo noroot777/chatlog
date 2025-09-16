@@ -3,11 +3,11 @@ package model
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sjzar/chatlog/internal/model/wxproto"
-	"github.com/sjzar/chatlog/pkg/util"
 	"github.com/sjzar/chatlog/pkg/util/lz4"
 	"google.golang.org/protobuf/proto"
 )
@@ -57,7 +57,7 @@ func (m *MessageV3) Wrap() *Message {
 
 	_m := &Message{
 		Seq:        m.Sequence,
-		ServerID:   util.IntToBase62(m.MsgSvrID),
+		ServerID:   strconv.FormatInt(m.MsgSvrID, 10),
 		Time:       time.Unix(m.CreateTime, 0),
 		Talker:     m.StrTalker,
 		IsChatRoom: strings.HasSuffix(m.StrTalker, "@chatroom"),

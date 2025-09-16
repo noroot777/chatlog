@@ -197,7 +197,7 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 	watchListStr = strings.Join(watchList, ",")
 
 	// TODO: just for test
-	watchListStr += ",wxid_q7pbibmw8u8r22,guanjun915423"
+	// watchListStr += ",wxid_q7pbibmw8u8r22,guanjun915423"
 
 	gms := make(map[string]*model.GM)               // key: chatroom wxid, value: gm
 	chatrooms := make(map[string]*withNewMember, 0) // key: chatroom wxid, value: withNewMember
@@ -343,6 +343,17 @@ func sendCashes(cashes map[string]*model.Cashes) {
 		}
 		str, _ := json.Marshal(&cash)
 		log.Info().Msgf("cash information: %s", str)
+
+		// TODO for test
+		sender, err = mq.NewRocketMQSender("tuanzi_chatlog_mongo")
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
+			return
+		}
+		err = sender.SendCashes(cash)
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
+		}
 	}
 }
 
@@ -359,6 +370,17 @@ func sendProdMsg(prodMsgs map[string]*model.PM) {
 		}
 		str, _ := json.Marshal(&pm)
 		log.Info().Msgf("tz私聊信息: %s", str)
+
+		// TODO for test
+		sender, err = mq.NewRocketMQSender("tuanzi_chatlog_mongo")
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
+			return
+		}
+		err = sender.SendProdMsg(pm)
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
+		}
 	}
 }
 
@@ -378,6 +400,17 @@ func sendGm(gms map[string]*model.GM) {
 		}
 		str, _ := json.Marshal(&gm)
 		log.Info().Msgf("group message: %s", str)
+
+		// TODO for test
+		sender, err = mq.NewRocketMQSender("tuanzi_chatlog_mongo")
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
+			return
+		}
+		err = sender.SendGm(gm)
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
+		}
 	}
 }
 
@@ -423,16 +456,27 @@ func sendMembers(m *MessageWebhook, chatrooms map[string]*withNewMember) {
 
 		sender, err := mq.NewRocketMQSender(chatroomInfo.tz)
 		if err != nil {
-			log.Error().Err(err).Msgf("严重！create rocketmq sender failed")
+			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
 			return
 		}
 		err = sender.SendMembers(members)
 		if err != nil {
-			log.Error().Err(err).Msgf("严重！send rocketmq message failed")
+			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
 		}
 
 		str, _ := json.Marshal(&members)
 		log.Info().Msgf("new members join: %s", str)
+
+		// TODO for test
+		sender, err = mq.NewRocketMQSender("tuanzi_chatlog_mongo")
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
+			return
+		}
+		err = sender.SendMembers(members)
+		if err != nil {
+			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
+		}
 	}
 }
 

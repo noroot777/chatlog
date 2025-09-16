@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sjzar/chatlog/internal/lt/model"
 	TaskType "github.com/sjzar/chatlog/internal/lt/task/type"
 	"github.com/sjzar/chatlog/internal/wechatdb"
@@ -23,33 +24,38 @@ type Task struct {
 	End   string `json:"end"`
 }
 
-func FetchAndExecuteOnlineTask(db *wechatdb.DB) {
-	token := "xxx" // TODO: replace with actual token
+func FetchAndExecuteOnlineTask(db *wechatdb.DB, tzs *model.Tzs) {
+	for _, tz := range tzs.Tzs {
+		if tz.Token == "" {
+			log.Error().Msgf("严重！ tz %s has no token, skip fetching tasks", tz.Tz)
+			continue
+		}
 
-	url := fmt.Sprintf("https://your-api-host/api/task?token=%s", token)
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("failed to fetch online task: %v\n", err)
-		return
+		url := fmt.Sprintf("https://your-api-host/api/task?token=%s", tz.Token)
+		resp, err := http.Get(url)
+		if err != nil {
+			fmt.Printf("failed to fetch online task: %v\n", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("failed to read response body: %v\n", err)
+			return
+		}
+
+		fmt.Printf("online task response: %s\n", string(body))
+
+		var task Task
+		if err := json.Unmarshal(body, &task); err != nil {
+			fmt.Printf("failed to unmarshal task: %v\n", err)
+			return
+		}
+
+		// Execute the task
+		executeTask(task, db)
 	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("failed to read response body: %v\n", err)
-		return
-	}
-
-	fmt.Printf("online task response: %s\n", string(body))
-
-	var task Task
-	if err := json.Unmarshal(body, &task); err != nil {
-		fmt.Printf("failed to unmarshal task: %v\n", err)
-		return
-	}
-
-	// Execute the task
-	executeTask(task, db)
 }
 
 func executeTask(task Task, db *wechatdb.DB) {
