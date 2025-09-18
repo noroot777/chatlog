@@ -255,7 +255,7 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 				res, err := m.db.GetContacts(message.Sender, 1, 0)
 				if err != nil || len(res.Items) == 0 {
 					log.Error().Err(err).Msgf("获取昵称失败 %s", message.Sender)
-					// TODO: continue?
+					continue
 				} else {
 					contact := res.Items[0]
 					message.SenderName = contact.NickName
@@ -266,6 +266,21 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 			if message.Content == "" {
 				// 在PlainTextContent4Lt方法中，有些不处理的消息类型会直接返回空
 				continue
+			}
+			// 一些引用的消息里没有SenderName，需要根据wxid查询
+			if strings.Contains(message.Content, "need query nickname:") {
+				re := regexp.MustCompile(`need query nickname:\{([^}]+)\}`)
+				matches := re.FindStringSubmatch(message.Content)
+				if len(matches) == 2 {
+					wxid := matches[1]
+					res, err := m.db.GetContacts(wxid, 1, 0)
+					if err != nil || len(res.Items) == 0 {
+						log.Error().Err(err).Msgf("获取昵称失败 %s", wxid)
+						continue
+					} else {
+						message.Content = strings.ReplaceAll(message.Content, "need query nickname:{"+wxid+"}", res.Items[0].NickName)
+					}
+				}
 			}
 			msg := &model.Msg{
 				Wxid:     message.Sender,
@@ -293,7 +308,7 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 				prodMsg := prodMsgs[tz]
 				msg := &model.Msg{
 					Wxid:     message.Sender,
-					Nickname: message.SenderName, // TODO 这个字段如果有remark，会是remark值，修改
+					Nickname: message.SenderName,
 					// Remark:   message.Remark,
 					When: message.Time.Format(time.DateTime),
 					Msg:  message.PlainTextContent4Lt(),

@@ -232,16 +232,20 @@ func (m *Message) ParseMediaInfo(data string) error {
 				break
 			}
 			subMsg := &Message{
-				Type:       int64(msg.App.ReferMsg.Type),
-				Time:       time.Unix(msg.App.ReferMsg.CreateTime, 0),
-				Sender:     msg.App.ReferMsg.ChatUsr,
-				SenderName: msg.App.ReferMsg.DisplayName,
-				ServerID:   msg.App.ReferMsg.SvrID,
+				Type:   int64(msg.App.ReferMsg.Type),
+				Time:   time.Unix(msg.App.ReferMsg.CreateTime, 0),
+				Sender: msg.App.ReferMsg.ChatUsr,
+				// SenderName: msg.App.ReferMsg.DisplayName,
+				ServerID: msg.App.ReferMsg.SvrID,
 			}
 			if subMsg.Sender == "" {
 				subMsg.Sender = msg.App.ReferMsg.FromUsr
 			}
+			if subMsg.SenderName == "" {
+				subMsg.SenderName = "need query nickname:{" + subMsg.Sender + "}"
+			}
 			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content); err != nil {
+				m.Contents["refer"] = subMsg // content不正确也把subMsg关联上，不知道后面会不会出问题
 				break
 			}
 			// if subMsg.Type == MessageSubTypeQuote {
@@ -694,7 +698,6 @@ func (m *Message) PlainTextContent4Lt() string {
 		// return "[语音通话]"
 		return ""
 	case MessageTypeSystem:
-		// TODO: 处理群成员
 		// return m.Content
 		return "[系统消息]"
 	default:
