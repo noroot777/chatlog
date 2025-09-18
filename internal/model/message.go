@@ -196,7 +196,7 @@ func (m *Message) ParseMediaInfo(data string) error {
 			// 文件
 			m.Contents["title"] = msg.App.Title
 			m.Contents["md5"] = msg.App.MD5
-		case MessageSubTypeMergeForward, MessageSubTypeNote, MessageSubTypeChatRoomNotice:
+		case MessageSubTypeMergeForward, MessageSubTypeNote:
 			// 合并转发 & 笔记
 			m.Contents["title"] = msg.App.Title
 			m.Contents["desc"] = msg.App.Des
@@ -209,6 +209,9 @@ func (m *Message) ParseMediaInfo(data string) error {
 				return err
 			}
 			m.Contents["recordInfo"] = recordInfo
+		case MessageSubTypeChatRoomNotice:
+			// 群公告
+			m.Content = msg.App.ChatRoomNoticeText
 		case MessageSubTypeMiniProgram, MessageSubTypeMiniProgram2:
 			// 小程序
 			m.Contents["title"] = msg.App.SourceDisplayName
@@ -241,7 +244,9 @@ func (m *Message) ParseMediaInfo(data string) error {
 			if err := subMsg.ParseMediaInfo(msg.App.ReferMsg.Content); err != nil {
 				break
 			}
+			// if subMsg.Type == MessageSubTypeQuote {
 			m.Contents["refer"] = subMsg
+			// }
 		case MessageSubTypePat:
 			// 拍一拍
 			if msg.App.PatMsg != nil {
@@ -601,23 +606,29 @@ func (m *Message) PlainTextContent4Lt() string {
 	case MessageTypeImage:
 		return "图片标识" + m.ServerID
 	case MessageTypeVoice:
-		return "[语音]"
+		// return "[语音]"
+		return ""
 	case MessageTypeCard:
-		return "[名片]"
+		// return "[名片]"
+		return ""
 	case MessageTypeVideo:
 		return "视频标识" + m.ServerID
 	case MessageTypeAnimation:
 		return "[动画表情]"
 	case MessageTypeLocation:
-		return "[位置]"
+		// return "[位置]"
+		return ""
 	case MessageTypeShare:
 		switch m.SubType {
 		case MessageSubTypeText:
-			return "[链接]"
+			// return "[链接]"
+			return ""
 		case MessageSubTypeLink, MessageSubTypeLink2:
-			return "[链接]"
+			// return "[链接]"
+			return ""
 		case MessageSubTypeFile:
-			return "[文件]"
+			// return "[文件]"
+			return ""
 		case MessageSubTypeGIF:
 			return "[GIF表情]"
 		case MessageSubTypeMergeForward:
@@ -625,9 +636,11 @@ func (m *Message) PlainTextContent4Lt() string {
 		case MessageSubTypeNote:
 			return "[笔记]"
 		case MessageSubTypeMiniProgram, MessageSubTypeMiniProgram2:
-			return "[小程序]"
+			// return "[小程序]"
+			return ""
 		case MessageSubTypeChannel:
-			return "[视频号]"
+			// return "[视频号]"
+			return ""
 		case MessageSubTypeQuote:
 			_refer, ok := m.Contents["refer"]
 			if !ok {
@@ -654,38 +667,32 @@ func (m *Message) PlainTextContent4Lt() string {
 			buf.WriteString(referContent)
 			return buf.String()
 		case MessageSubTypePat:
-			return m.Content
+			// return "[拍一拍]"
+			return ""
 		case MessageSubTypeChannelLive:
-			return "[视频号直播]"
+			// return "[视频号直播]"
+			return ""
 		case MessageSubTypeChatRoomNotice:
-			// TODO: 群公告的解析
-			_recordInfo, ok := m.Contents["recordInfo"]
-			if !ok {
-				return "[群公告]"
-			}
-			recordInfo, ok := _recordInfo.(*RecordInfo)
-			if !ok {
-				return "[群公告]"
-			}
-			host := ""
-			if m.Contents["host"] != nil {
-				host = m.Contents["host"].(string)
-			}
-			return recordInfo.String("群公告", "", host)
+			return "[群公告]\n" + m.Content
 		case MessageSubTypeMusic:
 			// return fmt.Sprintf("[音乐|%s](%s)", m.Contents["title"], m.Contents["url"])
-			return "[音乐]"
+			// return "[音乐]"
+			return ""
 		case MessageSubTypePay:
+			// 转账
 			return m.Content
 		case MessageSubTypeRedEnvelope:
-			return "[红包]"
+			// return "[红包]"
+			return ""
 		case MessageSubTypeRedEnvelopeCover:
-			return "[红包封面]"
+			// return "[红包封面]"
+			return ""
 		default:
 			return "[分享]"
 		}
 	case MessageTypeVOIP:
-		return "[语音通话]"
+		// return "[语音通话]"
+		return ""
 	case MessageTypeSystem:
 		// TODO: 处理群成员
 		// return m.Content

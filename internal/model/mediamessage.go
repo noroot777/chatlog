@@ -61,20 +61,21 @@ type Video struct {
 }
 
 type App struct {
-	Type              int         `xml:"type"`
-	Title             string      `xml:"title"`
-	Des               string      `xml:"des"`
-	URL               string      `xml:"url"`                         // type 5 分享
-	AppAttach         *AppAttach  `xml:"appattach,omitempty"`         // type 6 文件
-	MD5               string      `xml:"md5,omitempty"`               // type 6 文件
-	RecordItem        *RecordItem `xml:"recorditem,omitempty"`        // type 19 合并转发
-	SourceDisplayName string      `xml:"sourcedisplayname,omitempty"` // type 33 小程序
-	FinderFeed        *FinderFeed `xml:"finderFeed,omitempty"`        // type 51 视频号
-	ReferMsg          *ReferMsg   `xml:"refermsg,omitempty"`          // type 57 引用
-	PatMsg            *PatMsg     `xml:"patMsg,omitempty"`            // type 62 拍一拍
-	PatInfo           *PatInfo    `xml:"patinfo,omitempty"`           // type 62 拍一拍 v2
-	FinderLive        *FinderLive `xml:"finderLive,omitempty"`        // type 63 视频号直播
-	WCPayInfo         *WCPayInfo  `xml:"wcpayinfo,omitempty"`         // type 2000 微信转账
+	Type               int         `xml:"type"`
+	Title              string      `xml:"title"`
+	Des                string      `xml:"des"`
+	URL                string      `xml:"url"`                         // type 5 分享
+	AppAttach          *AppAttach  `xml:"appattach,omitempty"`         // type 6 文件
+	MD5                string      `xml:"md5,omitempty"`               // type 6 文件
+	RecordItem         *RecordItem `xml:"recorditem,omitempty"`        // type 19 合并转发
+	SourceDisplayName  string      `xml:"sourcedisplayname,omitempty"` // type 33 小程序
+	FinderFeed         *FinderFeed `xml:"finderFeed,omitempty"`        // type 51 视频号
+	ReferMsg           *ReferMsg   `xml:"refermsg,omitempty"`          // type 57 引用
+	PatMsg             *PatMsg     `xml:"patMsg,omitempty"`            // type 62 拍一拍
+	PatInfo            *PatInfo    `xml:"patinfo,omitempty"`           // type 62 拍一拍 v2
+	FinderLive         *FinderLive `xml:"finderLive,omitempty"`        // type 63 视频号直播
+	WCPayInfo          *WCPayInfo  `xml:"wcpayinfo,omitempty"`         // type 2000 微信转账
+	ChatRoomNoticeText string      `xml:"textannouncement,omitempty"`  // type 87 群公告
 }
 
 type Emoji struct {

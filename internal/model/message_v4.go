@@ -71,7 +71,7 @@ func (m *MessageV4) Wrap(talker string) *Message {
 		content = string(m.MessageContent)
 	}
 
-	if _m.IsChatRoom {
+	if _m.IsChatRoom && !_m.IsSelf { // 自己发送的消息不会带发送者:\n
 		split := strings.SplitN(content, ":\n", 2)
 		if len(split) == 2 {
 			_m.Sender = split[0]

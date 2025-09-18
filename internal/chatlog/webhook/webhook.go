@@ -255,6 +255,7 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 				res, err := m.db.GetContacts(message.Sender, 1, 0)
 				if err != nil || len(res.Items) == 0 {
 					log.Error().Err(err).Msgf("获取昵称失败 %s", message.Sender)
+					// TODO: continue?
 				} else {
 					contact := res.Items[0]
 					message.SenderName = contact.NickName
@@ -262,6 +263,10 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 				}
 			}
 			message.Content = message.PlainTextContent4Lt()
+			if message.Content == "" {
+				// 在PlainTextContent4Lt方法中，有些不处理的消息类型会直接返回空
+				continue
+			}
 			msg := &model.Msg{
 				Wxid:     message.Sender,
 				Nickname: message.SenderName,
@@ -272,6 +277,9 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 			}
 			gm.Msgs = append(gm.Msgs, msg)
 		} else {
+			// 处理私聊信息
+
+			// 公用号只处理tz的商品信息
 			if tzConf.Public {
 				if message.IsSelf {
 					// 如果是公用号自己的消息，跳过
@@ -289,6 +297,10 @@ func (m *MessageWebhook) Do(event fsnotify.Event) {
 					// Remark:   message.Remark,
 					When: message.Time.Format(time.DateTime),
 					Msg:  message.PlainTextContent4Lt(),
+				}
+				if msg.Msg == "" {
+					// 在PlainTextContent4Lt方法中，有些不处理的消息类型会直接返回空
+					continue
 				}
 				prodMsg.Msgs = append(prodMsg.Msgs, msg)
 			} else {

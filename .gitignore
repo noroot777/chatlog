@@ -31,5 +31,5 @@ chatlog.exe# Added by goreleaser init:
 dist/
 
 .vscode/
-
+.DS_Store
 __debug*
