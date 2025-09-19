@@ -61,10 +61,10 @@ func (c *ContactV3) Wrap() *Contact {
 
 func (c *Contact) DisplayName() string {
 	switch {
-	case c.Remark != "":
-		return c.Remark
 	case c.NickName != "":
 		return c.NickName
+	case c.Remark != "":
+		return c.Remark
 	}
 	return ""
 }

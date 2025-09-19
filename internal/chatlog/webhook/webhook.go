@@ -386,6 +386,9 @@ func sendCashes(cashes map[string]*model.Cashes) {
 
 func sendProdMsg(prodMsgs map[string]*model.PM) {
 	for _, pm := range prodMsgs {
+		if len(pm.Msgs) == 0 {
+			continue
+		}
 		sender, err := mq.NewRocketMQSender(pm.Tz)
 		if err != nil {
 			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
@@ -397,17 +400,6 @@ func sendProdMsg(prodMsgs map[string]*model.PM) {
 		}
 		str, _ := json.Marshal(&pm)
 		log.Info().Msgf("tz私聊信息: %s", str)
-
-		// TODO for test
-		sender, err = mq.NewRocketMQSender("tuanzi_chatlog_mongo")
-		if err != nil {
-			log.Error().Err(err).Msgf("严重！ create rocketmq sender failed")
-			return
-		}
-		err = sender.SendProdMsg(pm)
-		if err != nil {
-			log.Error().Err(err).Msgf("严重！ send rocketmq message failed")
-		}
 	}
 }
 
